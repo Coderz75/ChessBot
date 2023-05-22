@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import discord, typing
+import discord, typing, inspect
 from discord.ext import commands
 
 async def setup(bot):
@@ -41,6 +41,8 @@ async def _ping(ctx):
     """
     Pong!
     Show's bot's processing speed, as well as delay
+    **Usage**
+    `{}ping`
     """
     t = await ctx.send('Pong!')
     ms = (t.created_at - ctx.message.created_at).total_seconds() * 1000
@@ -66,9 +68,11 @@ async def _ping(ctx):
 async def _help(ctx, args: typing.Optional[str]):
     """
     Shows this message
+    **Usage**
+    `{}help |module/command|`
     """
     prefix = "chess."
-    owner = 712426753238237274
+    owner = 754532384984137772
 
     async def predicate(cmd):
         try:
@@ -79,9 +83,8 @@ async def _help(ctx, args: typing.Optional[str]):
     if not args:
         try:
             owner = ctx.guild.get_member(owner).mention
-
         except:
-            owner = 712426753238237274
+            pass
 
         embed = discord.Embed(
             title="Help",
@@ -113,8 +116,7 @@ async def _help(ctx, args: typing.Optional[str]):
         embed.add_field(
             name='About',
             value=
-            f"{ctx.bot.get_user(ctx.bot.user.id)} is devoloped by {owner}, <@!754532384984137772> and <@!728297793646624819>",
-            inline=False)
+            f"{ctx.bot.get_user(ctx.bot.user.id)} is devoloped by <@{owner}>")
     else:
 
         # iterating trough cogs
@@ -134,7 +136,7 @@ async def _help(ctx, args: typing.Optional[str]):
                         valid = await predicate(command)
                         if valid:
                             embed.add_field(name=f"`{prefix}{command.name}`",
-                                            value=command.help,
+                                            value=command.brief,
                                             inline=False)
                 # found cog - breaking loop
                 break
@@ -145,14 +147,23 @@ async def _help(ctx, args: typing.Optional[str]):
             for command in ctx.bot.commands:
                 if command.name.lower() == str(args).lower():
 
+                    y = command.name
+                    for z in command.aliases:
+                        y += "|{}".format(z)
+
+                    a = ""
+                    argspec = eval(f"inspect.getfullargspec(_{command.name})")
+                
+                    reqargs = argspec.args
+                    reqargs.remove('self'); reqargs.remove('context')
+                    for req in reqargs: a += f" {req}"
+
                     # making title - getting description from doc-string below class
                     embed = discord.Embed(title=f'{command} - Commands',
-                                          description=command.help,
+                                          description=command.help.format(prefix),
                                           color=discord.Color.green())
-
-                    embed.add_field(name=f"Usage",
-                                    value=f"`{prefix}{command.name}`",
-                                    inline=False)
+                
+                    
                     # found cog - breaking loop
                     break
 
